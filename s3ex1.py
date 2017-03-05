@@ -2,6 +2,7 @@ import boto3
 import sys
 import os.path
 from botocore.client import Config
+from botocore.exceptions import ClientError
 
 print """
 Will upload multiple files, skips a file that doesn't exist
@@ -17,14 +18,12 @@ session = boto3.Session(profile_name='dev')
 s3 = session.client('s3', 'us-west-2',
                     config=Config(s3={'addressing_style': 'path'}))
 
-
-response = s3.list_buckets()
-
-for checkbuck in response['Buckets']:
-    if checkbuck['Name'] == sys.argv[1]:
-        break
-else:
-    print "Bucket ", sys.argv[1], " doesn't exist, exiting.."
+try:
+    response = s3.head_bucket(
+        Bucket=sys.argv[1]
+    )
+except ClientError:
+    print "Invalid bucket name, exiting.."
     exit(1)
 
 
